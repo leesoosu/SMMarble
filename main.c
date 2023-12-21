@@ -1,16 +1,22 @@
 //
 //  main.c
 //  SMMarble
+//  플레이어 관리 및 게임의 주요 동작 흐름 실현
+//  파일 입출력을 통해 객체 구조체를 생성하고 likned list에 저장
+//  플레이어 설정
+//  게임 흐름에 맞는 코드 구현
 //
-//  Created by Juyeop Kim on 2023/11/05.
+//  Created by Suhyeon Lee.
 //
 
-#include <time.h>
-#include <string.h>
-#include "smm_object.h"
+
+#include "smm_object.h" //이 부분에서 오류 발생 
 #include "smm_database.h"
 #include "smm_common.h"
+#include <time.h>
+#include <string.h>
 
+//파일 경로를 상수로 지정, 파일 접근 용이 
 #define BOARDFILEPATH "marbleBoardConfig.txt"
 #define FOODFILEPATH "marbleFoodConfig.txt"
 #define FESTFILEPATH "marbleFestivalConfig.txt"
@@ -24,17 +30,18 @@ static int festival_nr;
 static int player_nr;
 
 
-typedef struct player {//플레이어 상태와 관련된 변수 구조체 
-        int energy;
-        int position;
-        char name[MAX_CHARNAME];
-        int accumCredit;  //누적 학점 
-        int flag_graduate;//졸업 여부 
-} player_t;
+typedef struct player {               //플레이어 상태와 관련된 변수 구조체 
+        int energy;                   //플레이어 에너지 
+        int position;                 //플레이어 위치    
+        char name[MAX_CHARNAME];      //플레이어 이름(최대 글자수 제한)
+        int accumCredit;              // 플레이어가 취득한 누적 학점 
+        int flag_graduate;            //졸업 여부를 나타내는 플래그(졸업했는지 여부 판단) 
+} player_t; 
 
-static player_t *cur_player;
+static player_t *cur_player;          //현재 게임에 참여 중인 플레이어의 배열 포인터 
 //static player_t cur_player[MAX_PLAYER];
 
+//컴파일되지 않는 코드 
 #if 0
 static int player_energy[MAX_PLAYER];
 static int player_position[MAX_PLAYER];
@@ -51,24 +58,26 @@ float calcAverageGrade(int player); //calculate average grade of the player,
 smmGrade_e takeLecture(int player, char *lectureName, int credit); //take the lecture (insert a grade of the player)
 void* findGrade(int player, char *lectureName); //find the grade from the player's grade history
 void printGrades(int player); //print all the grade history of the player
+void generatePlayers(int n, int initEnergy);
 #endif
 
-//플레이어의 모든 학점을 출력 
+//플레이어의 모든 학점을 출력하는 함수 
 void printGrades(int player)
 {
      int i;
      void *gradePtr;
+     //해당 플레이어의 학점 노드를 모두 반복하며 출력 
      for (i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)
      {
          gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
          printf("%s : %i\n", smmObj_getNodeName(gradePtr), smmObj_getNodeGrade(gradePtr));
      }
 }
-//턴 시작 시 모든 플레이어의 상태 출력(이름,학점,에너지,위치) 
+//모든 플레이어의 상태(이름, 학점, 에너지, 위치)를 출력하는 함수
 void printPlayerStatus(void)
 {
      int i;
-     
+     //모든 플레이어의 상태를 출력 
      for (i=0;i<player_nr;i++)
      {
          printf("%s : credit %i, energy %i, position %i\n", 
@@ -78,11 +87,11 @@ void printPlayerStatus(void)
                       cur_player[i].position);
      }
 }
-//새로운 플레이어 생성 
+//새로운 플레이어 생성하는 함수 
 void generatePlayers(int n, int initEnergy) //generate a new player
 {
      int i;
-     //n time loop
+     //n time loop만큼 플레이어 생성 
      for (i=0;i<n;i++)
      {
          //input name
@@ -90,19 +99,19 @@ void generatePlayers(int n, int initEnergy) //generate a new player
          scanf("%s", cur_player[i].name);
          fflush(stdin);
          
-         //set position
+         //set position, 초기 위치를 0으로 설정 
          //player_position[i] = 0;
          cur_player[i].position = 0;
          
          //set energy
          //player_energy[i] = initEnergy;
-         cur_player[i].energy = initEnergy;
-         cur_player[i].accumCredit = 0;
-         cur_player[i].flag_graduate = 0;
+         cur_player[i].energy = initEnergy;     //초기 에너지 설정 
+         cur_player[i].accumCredit = 0;         //누적 학점 초기화 
+         cur_player[i].flag_graduate = 0;       //졸업 여부 초기화 
      }
 }
 
-//임의의 키로 주사위 굴리기 
+//임의의 키로 주사위 굴리는 함수 
 int rolldie(int player)
 {
     char c;
@@ -111,52 +120,64 @@ int rolldie(int player)
     fflush(stdin);
     
 #if 1
-    if (c == 'g')          //g를 누르면 학점을 출력 
+    if (c == 'g')                  //g를 누르면 학점을 출력 
         printGrades(player);
 #endif
     
-    return (rand()%MAX_DIE + 1);//랜덤으로 주사위 굴림 
+    return (rand()%MAX_DIE + 1);   //랜덤으로 주사위 값을 반환 
 }
 
 //action code when a player stays at a node
-//플레이어의 행동을 처리, 각 노드 타입에 따라 특정 행동을 취함 
+//플레이어가 노드에 머물렀을 때 행동을 처리하는 함수
 void actionNode(int player)
 {
     void *boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position );
     //int type = smmObj_getNodeType( cur_player[player].position );
     int type = smmObj_getNodeType( boardPtr );
-    char *name = smmObj_getNodeName( boardPtr );
+  //  char *name = smmObj_getNodeName( boardPtr );
     void *gradePtr;
     
-    switch(type)
+    switch(type) //노드 타입에 따라 특정 행동을 취한다. 
     {
-        //case lecture:
-        case SMMNODE_TYPE_LECTURE:
-             if 
-            cur_player[player].accumCredit += smmObj_getNodeCredit( boardPtr );
-            cur_player[player].energy -= smmObj_getNodeEnergy( boardPtr );
-            
-            //grade generation
-            gradePtr = smmObj_genObject(name, smmObjType_grade, 0, smmObj_getNodeCredit( boardPtr ), 0, ??);
-            smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradePtr);
-            
-            break;
-            
-        default:
-            break;
+    case 0:
+        printf("lecture"); //전공 과목을 들을 수 있음 
+        break;
+    case 1:
+        printf("restaurant"); //에너지를 보충함 
+        break;
+    case 2:
+        printf("laboratory"); //실험을 함(무인도) 
+        break;
+    case 3:
+        printf("home"); //시작 포인트, 종료 포인트, 지날 때마다 체력 보충 
+        break;
+    case 4:
+        printf("experiment"); //실험실로 이동
+        break;
+    case 5:
+        printf("foodChance"); //랜덤으로 음식을 먹고 체력 보충
+        break;
+    case 6:
+        printf("festival"); // 축제 -> 랜덤으로 미션 수행
+        break;
+    default:
+        break;
     }
 }
 //플레이어를 이동시킴,(졸업 체크, 위치 업데이트) 
 void goForward(int player, int step)
 {
-     void *boardPtr;
-     cur_player[player].position += step;
-     boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position);
-     
-     printf("%s go to node %i (name: %s)\n", 
-                cur_player[player].name, cur_player[player].position,
-                smmObj_getNodeName(boardPtr);
+    void *boardPtr;
+    // 플레이어의 위치를 주어진 스텝만큼 증가시킴
+    cur_player[player].position += step;   
+    // 플레이어가 이동한 새로운 위치의 게임 보드 데이터를 가져옴
+    boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position);
+    
+    printf("%s goes to node %i (name: %s)\n", 
+           cur_player[player].name, cur_player[player].position,
+           smmObj_getNodeName(boardPtr));
 }
+
 
 
 int main(int argc, const char * argv[]) {
@@ -170,38 +191,38 @@ int main(int argc, const char * argv[]) {
     int initEnergy;
     int turn=0;
     
+    //게임의 초기 노드, 음식, 축제  
     board_nr = 0;
     food_nr = 0;
     festival_nr = 0;
     
+    //난수 설정 
     srand(time(NULL));
     
     
     //1. import parameters ---------------------------------------------------------------------------------
     //1-1. boardConfig 
-    if ((fp = fopen(BOARDFILEPATH,"r")) == NULL)
-    {
+    if ((fp = fopen(BOARDFILEPATH, "r")) == NULL) {
         printf("[ERROR] failed to open %s. This file should be in the same directory of SMMarble.exe.\n", BOARDFILEPATH);
         getchar();
         return -1;
     }
-    
+
     printf("Reading board component......\n");
-    while ( fscanf(fp, "%s %i %i %i", name, &type, &credit, &energy) == 4 ) //read a node parameter set
-    {
-        //store the parameter set
-        //(char* name, smmObjType_e objType, int type, int credit, int energy, smmObjGrade_e grade)
-        void *boardObj = smmObj_genObject(name, smmObjType_board, type, credit, energy, 0);
-        smmdb_addTail(LISTNO_NODE, boardObj);
+    while (fscanf(fp, "%s %i %i %i", name, &type, &credit, &energy) == 4) {
+        //void *boardObj = smmObj_genObject(name, SMMNODE_TYPE_MAX, type, credit, energy, 0); 
+        //smmdb_addTail(LISTNO_NODE, boardObj);
         
-        if (type == SMMNODE_TYPE_HOME)
+        //if (type == SMMNODE_TYPE_HOME)
+        //게임 보드의 설정 파일을 읽어온 후 초기 에너지 설정 
            initEnergy = energy;
         board_nr++;
     }
     fclose(fp);
     printf("Total number of board nodes : %i\n", board_nr);
-    
-    
+
+   
+    //게임 보드 노드 출력 
     for (i = 0;i<board_nr;i++)
     {
         void *boardObj = smmdb_getData(LISTNO_NODE, i);
@@ -261,9 +282,6 @@ int main(int argc, const char * argv[]) {
     
     cur_player = (player_t*)malloc(player_nr*sizeof(player_t));
     generatePlayers(player_nr, initEnergy);
-    
-    
-    
     
     
     //3. SM Marble game starts ---------------------------------------------------------------------------------

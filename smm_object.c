@@ -2,26 +2,28 @@
 //  smm_node.c
 //  SMMarble
 //
-//  Created by Juyeop Kim on 2023/11/05.
+//  Created by Suhyeon Lee.
 //  게임에 필요한 객체(노드, 음식카드, 축제카드, 수강 이력) 정보 저장 
+
+#include <string.h>
 
 #include "smm_common.h"
 #include "smm_object.h"
-#include <string.h>
+
 
 #define MAX_NODETYPE    7
 #define MAX_GRADE       9
 #define MAX_NODE        100
 
 
-static char smmNodeName[SMMNODE_TYPE_MAX][MAX_CHARNAME] = {
-       "강의",
-       "식당",
-       "실험실",
-       "집",
-       "실험실로이동",
-       "음식찬스",
-       "축제기간"
+static char smmNodeName[MAX_NODETYPE][MAX_CHARNAME] = {
+    "lecture",
+    "restaurant",
+    "laboratory",
+    "home",
+    "experiment",
+    "foodChance",
+    "festival"
 };
 
 char* smmObj_getTypeName(int type)
@@ -53,8 +55,8 @@ typedef struct smmObject {
        smmObjGrade_e grade;
 } smmObject_t;
 
-//static smmObject_t smm_node[MAX_NODE];
-//static int smmObj_noNode = 0;
+static smmObject_t smm_node[MAX_NODE];
+static int smmObj_noNode = 0;
 
 //3. 관련 함수 변경 
 //object generation

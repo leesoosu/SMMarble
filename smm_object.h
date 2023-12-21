@@ -2,9 +2,9 @@
 //  smm_object.h
 //  SMMarble object
 //
-//  Created by Juyeop Kim on 2023/11/05.
+//  Created by Suhyeon Lee
 //
-
+ 
 #ifndef smm_object_h
 #define smm_object_h
 
@@ -17,6 +17,8 @@
 #define SMMNODE_TYPE_FESTIVAL           6
 
 #define SMMNODE_TYPE_MAX                7
+
+
 
 
 /* node type :
