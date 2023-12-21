@@ -2,7 +2,7 @@
 //  smm_common.h
 //  SMMarble
 //
-//  Created by Suhyeon Lee.
+//  Created by Suhyeon Lee
 //
 
 #ifndef smm_common_h

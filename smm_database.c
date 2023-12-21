@@ -214,23 +214,18 @@ int smmdb_len(int list_nr)
 }
 
 
-/*
-    description : get the object data
-    input parameters : index
-    return value : object pointer
-*/
-void* smmdb_getData(int list_nr, int index)
-{
+void* smmdb_getData(int list_nr, int index) {
     void* obj = NULL;
     node_t* ndPtr;
     
     //parameter checking
-    if ((ndPtr = smmList(list_nr, index)) != NULL)
-    {
+    // 입력된 인덱스에 해당하는 객체의 데이터를 가져옴 
+    if ((ndPtr = smmList(list_nr, index)) != NULL) {
         obj = (void*)ndPtr->obj;
-        listPtr[list_nr] = ndPtr;
+        listPtr[list_nr] = ndPtr; // 현재 리스트 위치를 찾은 노드로 갱신합니다.
     }
     
+    // 가져온 객체의 데이터가 없을 경우 에러를 출력합니다.
     if (obj == NULL)
         printf("[ERROR] smmdb_getData() : there is no data of index %i\n", index);
     

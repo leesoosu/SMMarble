@@ -2,7 +2,7 @@
 //  smm_database.h
 //  infection Path
 //
-//  Created by Suhyeon Lee.
+//  Created by Suhyeon Lee
 //
 
 #ifndef smm_database_h

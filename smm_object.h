@@ -32,7 +32,7 @@
 */
 
 
-/* grade :
+/* grade 
     A+,
     A0,
     A-,
@@ -59,4 +59,4 @@ int smmObj_getNodeEnergy(int node_nr);
 char* smmObj_getTypeName(int type);
 
 
-#endif /* smm_object_h */
+#endif /*smm_object_h*/

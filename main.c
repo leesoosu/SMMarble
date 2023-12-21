@@ -1,44 +1,41 @@
 //
 //  main.c
 //  SMMarble
-//  플레이어 관리 및 게임의 주요 동작 흐름 실현
-//  파일 입출력을 통해 객체 구조체를 생성하고 likned list에 저장
-//  플레이어 설정
-//  게임 흐름에 맞는 코드 구현
+//  Player management and realization of the main game flow
+//  Create object structs via file I/O and store them in a linked list
+//  Player setup
+//  Code implementation according to the game flow
 //
 //  Created by Suhyeon Lee.
 //
 
-
-#include "smm_object.h" //이 부분에서 오류 발생 
+#include "smm_object.h" // Error occurs in this part
 #include "smm_database.h"
 #include "smm_common.h"
 #include <time.h>
 #include <string.h>
 
-//파일 경로를 상수로 지정, 파일 접근 용이 
+// Defining file paths as constants for easy file access
 #define BOARDFILEPATH "marbleBoardConfig.txt"
 #define FOODFILEPATH "marbleFoodConfig.txt"
 #define FESTFILEPATH "marbleFestivalConfig.txt"
 
-
-//board configuration parameters(보드 구성 매개변수) 
-static int board_nr; 
-static int food_nr; 
-static int festival_nr; 
+// Board configuration parameters
+static int board_nr;
+static int food_nr;
+static int festival_nr;
 
 static int player_nr;
 
+typedef struct player {               // Structure containing player status-related variables
+        int energy;                   // Player energy
+        int position;                 // Player position
+        char name[MAX_CHARNAME];      // Player name (maximum character limit)
+        int accumCredit;              // Accumulated credits obtained by the player
+        int flag_graduate;            // Flag indicating graduation status (whether the player has graduated)
+} player_t;
 
-typedef struct player {               //플레이어 상태와 관련된 변수 구조체 
-        int energy;                   //플레이어 에너지 
-        int position;                 //플레이어 위치    
-        char name[MAX_CHARNAME];      //플레이어 이름(최대 글자수 제한)
-        int accumCredit;              // 플레이어가 취득한 누적 학점 
-        int flag_graduate;            //졸업 여부를 나타내는 플래그(졸업했는지 여부 판단) 
-} player_t; 
-
-static player_t *cur_player;          //현재 게임에 참여 중인 플레이어의 배열 포인터 
+static player_t *cur_player;          // Array pointer for players currently participating in the game
 //static player_t cur_player[MAX_PLAYER];
 
 //컴파일되지 않는 코드 
